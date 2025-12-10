@@ -29,6 +29,7 @@
 #include "zebra/interface.h"
 #include "zebra/zebra_neigh.h"
 #include "zebra/zebra_pbr.h"
+#include "zebra/zebra_neighsnoop.h"
 
 DEFINE_MTYPE_STATIC(ZEBRA, ZNEIGH_INFO, "Zebra neigh table");
 DEFINE_MTYPE_STATIC(ZEBRA, ZNEIGH_ENT, "Zebra neigh entry");
@@ -62,7 +63,7 @@ static int zebra_neigh_rb_cmp(const struct zebra_neigh_ent *n1,
 }
 RB_GENERATE(zebra_neigh_rb_head, zebra_neigh_ent, rb_node, zebra_neigh_rb_cmp);
 
-static struct zebra_neigh_ent *zebra_neigh_find(ifindex_t ifindex,
+struct zebra_neigh_ent *zebra_neigh_find(ifindex_t ifindex,
 						struct ipaddr *ip)
 {
 	struct zebra_neigh_ent tmp;
@@ -147,6 +148,9 @@ void zebra_neigh_del(struct interface *ifp, struct ipaddr *ip)
 	n = zebra_neigh_find(ifp->ifindex, ip);
 	if (!n)
 		return;
+
+	zebra_neighsnoop_neighbor_del(n);
+
 	zebra_neigh_free(n);
 }
 
@@ -179,16 +183,17 @@ void zebra_neigh_add(struct interface *ifp, struct ipaddr *ip,
 
 	n = zebra_neigh_find(ifp->ifindex, ip);
 	if (n) {
-		if (!memcmp(&n->mac, mac, sizeof(*mac)))
-			return;
+		if (memcmp(&n->mac, mac, sizeof(*mac))) {
+			memcpy(&n->mac, mac, sizeof(*mac));
+			SET_FLAG(n->flags, ZEBRA_NEIGH_ENT_ACTIVE);
 
-		memcpy(&n->mac, mac, sizeof(*mac));
-		SET_FLAG(n->flags, ZEBRA_NEIGH_ENT_ACTIVE);
-
-		/* update rules linked to the neigh */
-		zebra_neigh_pbr_rules_update(n);
+			/* update rules linked to the neigh */
+			zebra_neigh_pbr_rules_update(n);
+		}
 	} else {
-		zebra_neigh_new(ifp->ifindex, ip, mac);
+		n = zebra_neigh_new(ifp->ifindex, ip, mac);
+
+		zebra_neighsnoop_neighbor_add(n);
 	}
 }
 

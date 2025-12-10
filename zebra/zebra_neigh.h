@@ -40,6 +40,8 @@ struct zebra_neigh_info {
 
 
 /****************************************************************************/
+extern struct zebra_neigh_ent *zebra_neigh_find(ifindex_t ifindex,
+						struct ipaddr *ip);
 extern void zebra_neigh_add(struct interface *ifp, struct ipaddr *ip,
 			    struct ethaddr *mac);
 extern void zebra_neigh_del(struct interface *ifp, struct ipaddr *ip);

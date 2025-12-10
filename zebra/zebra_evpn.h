@@ -184,6 +184,8 @@ bool zebra_evpn_hash_cmp(const void *p1, const void *p2);
 int zebra_evpn_list_cmp(void *p1, void *p2);
 void *zebra_evpn_alloc(void *p);
 struct zebra_evpn *zebra_evpn_lookup(vni_t vni);
+struct zebra_evpn *zebra_evpn_lookup_bridge_vlan(struct interface *br_ifp,
+						 vlanid_t vid);
 struct zebra_evpn *zebra_evpn_add(vni_t vni);
 int zebra_evpn_del(struct zebra_evpn *zevpn);
 int zebra_evpn_send_add_to_client(struct zebra_evpn *zevpn);

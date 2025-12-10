@@ -1028,6 +1028,40 @@ struct zebra_evpn *zebra_evpn_lookup(vni_t vni)
 	return zevpn;
 }
 
+struct zebra_evpn_lookup_bridge_vlan_ctx {
+	struct interface *br_if;
+	vlanid_t vid;
+
+	struct zebra_evpn *out_zevpn;
+};
+
+static void zebra_evpn_lookup_bridge_vlan_hash_find(struct hash_bucket *bucket,
+						    void *ctxt)
+{
+	struct zebra_evpn *zevpn = (struct zebra_evpn *)bucket->data;
+	struct zebra_evpn_lookup_bridge_vlan_ctx *ctx = ctxt;
+
+        if (zevpn->bridge_if == ctx->br_if &&
+            zevpn->vid == ctx->vid)
+		ctx->out_zevpn = zevpn;
+
+}
+
+struct zebra_evpn *zebra_evpn_lookup_bridge_vlan(struct interface *br_ifp,
+						  vlanid_t vid)
+{
+	struct zebra_evpn_lookup_bridge_vlan_ctx ctx;
+
+	ctx.out_zevpn = NULL;
+	ctx.br_if = br_ifp;
+	ctx.vid = vid;
+
+	hash_iterate(zebra_vrf_get_evpn()->evpn_table,
+		     zebra_evpn_lookup_bridge_vlan_hash_find, &ctx);
+
+	return ctx.out_zevpn;
+}
+
 /*
  * Add EVPN hash entry.
  */

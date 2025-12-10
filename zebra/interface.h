@@ -21,6 +21,7 @@
 #include "zebra/zebra_nhg_private.h"
 #include "zebra/zebra_router.h"
 #include "zebra/rtadv.h"
+#include "zebra/zebra_neighsnoop.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -164,6 +165,12 @@ struct zebra_if {
 		struct sockaddr_storage sdl_storage;
 	};
 #endif
+
+	/* Track bridges with Neighsnoop enabled eBPF TC filters */
+#ifdef HAVE_NEIGHSNOOP
+	struct zebra_neighsnoop_bridge *neighsnoop_br;
+	struct zebra_if_neighsnoop_probe *neighsnoop_probe;
+#endif /* HAVE_NEIGHSNOOP */
 
 	/* ptm enable configuration */
 	uint8_t ptm_enable;

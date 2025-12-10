@@ -2414,7 +2414,7 @@ static void _netlink_mpls_debug(int cmd, uint32_t label, const char *routedesc)
 
 static int netlink_neigh_update(int cmd, int ifindex, void *addr, char *lla,
 				int llalen, ns_id_t ns_id, uint8_t family,
-				bool permanent, uint8_t protocol)
+				bool permanent, bool replace, uint8_t protocol)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2428,6 +2428,8 @@ static int netlink_neigh_update(int cmd, int ifindex, void *addr, char *lla,
 
 	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct ndmsg));
 	req.n.nlmsg_flags = NLM_F_CREATE | NLM_F_REQUEST;
+	if (replace)
+		req.n.nlmsg_flags |= NLM_F_REPLACE;
 	req.n.nlmsg_type = cmd; // RTM_NEWNEIGH or RTM_DELNEIGH
 	req.n.nlmsg_pid = zns->netlink_cmd.snl.nl_pid;
 
@@ -3889,11 +3891,12 @@ int netlink_nexthop_read(struct zebra_ns *zns)
 
 
 int kernel_neigh_update(int add, int ifindex, void *addr, char *lla, int llalen,
-			ns_id_t ns_id, uint8_t family, bool permanent)
+			ns_id_t ns_id, uint8_t family, bool permanent,
+			bool replace)
 {
 	return netlink_neigh_update(add ? RTM_NEWNEIGH : RTM_DELNEIGH, ifindex,
 				    addr, lla, llalen, ns_id, family, permanent,
-				    RTPROT_ZEBRA);
+				    replace, RTPROT_ZEBRA);
 }
 
 /**

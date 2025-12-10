@@ -65,7 +65,7 @@ extern enum zebra_dplane_result kernel_tc_update(struct zebra_dplane_ctx *ctx);
 
 extern int kernel_neigh_update(int cmd, int ifindex, void *addr, char *lla,
 			       int llalen, ns_id_t ns_id, uint8_t family,
-			       bool permanent);
+			       bool permanent, bool replace);
 extern int kernel_neigh_register(vrf_id_t vrf_id, struct zserv *client,
 				 bool reg);
 extern int kernel_interface_set_master(struct interface *master,

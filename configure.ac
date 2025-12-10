@@ -949,6 +949,55 @@ fi
 AC_SUBST([DFLT_NAME])
 AC_DEFINE_UNQUOTED([DFLT_NAME], ["$DFLT_NAME"], [Name of the configuration default set])
 
+
+dnl -------------------------------------
+dnl Optional Neighbor Snooping via TC BPF
+dnl -------------------------------------
+
+AC_ARG_ENABLE([neighsnoop],
+  AS_HELP_STRING([--disable-neighsnoop], [Disable BPF-based neighbor snooping in zebra]),
+  [enable_neighsnoop=$enableval],
+  [enable_neighsnoop=yes]
+)
+
+HAVE_NEIGHSNOOP=no
+AS_IF([test "x$enable_neighsnoop" = "xyes"], [
+  AC_CHECK_PROG([CLANG], [clang], [clang])
+  AC_CHECK_PROG([BPTOOL], [bpftool], [bpftool])
+  PKG_CHECK_MODULES([LIBBPF], [libbpf >= 0.4], [have_libbpf=yes], [have_libbpf=no])
+
+  AS_IF([test "x$CLANG" != "x" -a "x$BPTOOL" != "x" -a "x$have_libbpf" = "xyes"], [
+    AC_MSG_CHECKING([whether $CLANG supports BPF target])
+    echo 'int x;' > conftest.c
+    $CLANG -O2 -target bpf -c conftest.c -o conftest.o >/dev/null 2>&1
+    if test $? -eq 0; then
+      AC_MSG_RESULT([yes])
+      HAVE_NEIGHSNOOP=yes
+    else
+      AC_MSG_RESULT([no])
+    fi
+    rm -f conftest.c conftest.o
+  ])
+])
+
+AM_CONDITIONAL([HAVE_NEIGHSNOOP], [test "x$HAVE_NEIGHSNOOP" = "xyes"])
+AC_SUBST([CLANG])
+AC_SUBST([BPTOOL])
+AC_SUBST([LIBBPF_CFLAGS])
+AC_SUBST([LIBBPF_LIBS])
+
+AS_IF([test "x$enable_neighsnoop" = "xyes"], [
+  if test "x$HAVE_NEIGHSNOOP" = "xyes"; then
+    AC_DEFINE([HAVE_NEIGHSNOOP], [1], [Build with BPF-based neighbor snooping support])
+    AC_MSG_NOTICE([Neighbor snooping with BPF: ENABLED])
+  else
+    AC_MSG_NOTICE([Neighbor snooping with BPF: DISABLED (missing clang, bpftool or libbpf)])
+  fi
+], [
+  AC_MSG_NOTICE([Neighbor snooping with BPF: DISABLED (by user)])
+])
+
+
 #
 # Python for clippy
 #

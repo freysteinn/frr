@@ -35,6 +35,7 @@
 #include "zebra/zebra_vxlan.h"
 #include "zebra/zebra_errors.h"
 #include "zebra/zebra_evpn_mh.h"
+#include "zebra/zebra_neighsnoop.h"
 
 DEFINE_MTYPE_STATIC(ZEBRA, ZINFO, "Zebra Interface Information");
 
@@ -835,7 +836,7 @@ void if_nbr_mac_to_ipv4ll_neigh_update(struct interface *ifp,
 	 * since Netlink doesn't currently offer update message types.
 	 */
 	kernel_neigh_update(0, ifp->ifindex, (void *)&ipv4_ll.s_addr, mac, 6,
-			    ns_id, AF_INET, true);
+			    ns_id, AF_INET, true, false);
 
 	/* Add new neighbor entry.
 	 *
@@ -848,7 +849,7 @@ void if_nbr_mac_to_ipv4ll_neigh_update(struct interface *ifp,
 	 */
 	if (add)
 		kernel_neigh_update(add, ifp->ifindex, (void *)&ipv4_ll.s_addr,
-				    mac, 6, ns_id, AF_INET, true);
+				    mac, 6, ns_id, AF_INET, true, false);
 
 	memcpy(&zif->neigh_mac[0], &mac[0], 6);
 

@@ -42,6 +42,7 @@
 #include "zebra/zebra_evpn_mh.h"
 #include "zebra/zebra_evpn_vxlan.h"
 #include "zebra/zebra_router.h"
+#include "zebra/zebra_neighsnoop.h"
 
 DEFINE_MTYPE_STATIC(ZEBRA, L2_VNI, "L2 VNI");
 
@@ -463,6 +464,9 @@ static int zebra_vxlan_if_add_vni(struct interface *ifp,
 
 		/* Read and populate local MACs and neighbors */
 		zebra_evpn_read_mac_neigh(zevpn, ifp);
+
+		/* Add neighbor snooping to the bridge */
+		zebra_neighsnoop_bridge_add(zif->brslave_info.br_if);
 	}
 
 	return 0;
@@ -472,6 +476,8 @@ static void zebra_vxlan_if_vni_entry_del(struct zebra_if *zif,
 					 struct zebra_vxlan_vni *vni)
 {
 	if (vni) {
+		zebra_neighsnoop_bridge_del(zif->brslave_info.br_if);
+
 		zebra_evpn_vl_vxl_deref(vni->access_vlan, vni->vni, zif);
 		zebra_vxlan_if_del_vni(zif->ifp, vni);
 	}

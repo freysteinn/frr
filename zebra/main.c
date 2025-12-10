@@ -103,8 +103,11 @@ zebra_capabilities_t _caps_p[] = {ZCAP_NET_ADMIN, ZCAP_SYS_ADMIN,
 				  ZCAP_NET_RAW,
 #ifdef HAVE_DPDK
 				  ZCAP_IPC_LOCK,  ZCAP_READ_SEARCH,
-				  ZCAP_SYS_RAWIO
+				  ZCAP_SYS_RAWIO,
 #endif
+//#ifdef HAVE_NEIGHSNOOP
+				  ZCAP_BPF, ZCAP_PERFMON
+//#endif
 };
 
 /* zebra privileges to run with */
@@ -222,6 +225,8 @@ static void sigint(void)
 void zebra_finalize(struct event *dummy)
 {
 	zlog_info("Zebra final shutdown");
+
+	zebra_neighsnoop_terminate();
 
 	vrf_terminate();
 
@@ -539,6 +544,9 @@ int main(int argc, char **argv)
 
 	/* Config handler Init */
 	zebra_evpn_init();
+
+	/* Neighsnoop init */
+	zebra_neighsnoop_init();
 
 	/* Error init */
 	zebra_error_init();

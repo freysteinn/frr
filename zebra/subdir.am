@@ -266,3 +266,39 @@ zebra_zebra_dplane_dpdk_la_SOURCES = zebra/dpdk/zebra_dplane_dpdk.c zebra/dpdk/z
 zebra_zebra_dplane_dpdk_la_LDFLAGS = -avoid-version -module -shared -export-dynamic -L/usr/local/lib -v
 zebra_zebra_dplane_dpdk_la_CFLAGS = $(DPDK_CFLAGS)
 zebra_zebra_dplane_dpdk_la_LIBADD  = $(DPDK_LIBS)
+
+if HAVE_NEIGHSNOOP
+zebra_zebra_SOURCES += \
+	zebra/zebra_neighsnoop.c \
+	zebra/zebra_neighsnoop_cache.c \
+	zebra/zebra_neighsnoop_probe.c
+
+clippy_scan += zebra/zebra_neighsnoop.c
+
+noinst_HEADERS += \
+	zebra/zebra_neighsnoop.bpf.skel.h \
+	zebra/zebra_neighsnoop_shared.h \
+	zebra/zebra_neighsnoop.h \
+	zebra/zebra_neighsnoop_cache.h \
+	zebra/zebra_neighsnoop_probe.h
+
+zebra_zebra_LDADD += $(LIBBPF_LIBS)
+BUILT_SOURCES += zebra/zebra_neighsnoop.bpf.skel.h
+CLEANFILES += \
+	zebra/zebra_neighsnoop.bpf.o \
+	zebra/zebra_neighsnoop.bpf.skel.h
+
+zebra/zebra_neighsnoop.o: zebra/zebra_neighsnoop.bpf.skel.h \
+	zebra/zebra_neighsnoop_cache.h \
+	zebra/zebra_neighsnoop_probe.h \
+	zebra/zebra_neighsnoop_shared.h \
+	zebra/zebra_neighsnoop_cache.o
+
+zebra/zebra_neighsnoop.bpf.o: zebra/zebra_neighsnoop.bpf.c zebra/zebra_neighsnoop_shared.h
+	$(AM_V_at)mkdir -p $(dir $@)
+	${CLANG} -Wall -O2 -g -target bpf -c $< -o $@
+
+zebra/zebra_neighsnoop.bpf.skel.h: zebra/zebra_neighsnoop.bpf.o
+	$(AM_V_at)mkdir -p $(dir $@)
+	${BPTOOL} gen skeleton $< > $@
+endif
